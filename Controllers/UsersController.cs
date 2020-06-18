@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using UserAPI.Commands;
 using UserAPI.Models;
+using UserAPI.Queries;
 
 namespace UserAPI.Controllers
 {
@@ -12,11 +15,14 @@ namespace UserAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private static readonly List<UserModel> _users = new List<UserModel>
+        private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
+
+        public UserController(IMediator mediator, IMapper mapper)
         {
-            new UserModel {FName = "Sergey", LName = "Zhizhko", Value = "11r3start11@gmail.com"},
-            new UserModel {FName = "John", LName = "Doe", Value = "john.doe@microsoft.com"}
-        };
+            _mediator = mediator;
+            _mapper = mapper;
+        }
 
         // GET: api/User
         /// <summary>
@@ -26,56 +32,65 @@ namespace UserAPI.Controllers
         [ProducesResponseType(typeof(IEnumerable<UserModel>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            if (_users.Any())
-            {
-                return Ok(_users);
-            }
-            else
+            var query = new GetAllUsersQuery();
+            var result = await _mediator.Send(query);
+
+            if (!result.Any())
             {
                 return NoContent();
             }
+
+            return Ok(result);
         }
 
         // GET: api/User/5
         [HttpGet("{id}")]
-        public IActionResult Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            if (id > _users.Count)
+            var query = new GetUserByIdQuery(id);
+            var result = await _mediator.Send(query);
+
+            if (result == null)
             {
                 return NotFound();
             }
 
-            return Ok(_users[id-1]);
+            return Ok(result);
         }
 
         // POST: api/User
         [HttpPost]
-        public IActionResult Post(UserModel value)
+        public async Task<IActionResult> Post(UserModel model)
         {
-            _users.Add(value);
-            var index = _users.IndexOf(value)+1;
-            return Created($"/api/user/{index}", value);
+            var command = _mapper.Map<CreateUserCommand>(model);
+            var createdUser = await _mediator.Send(command);
+
+            if (createdUser == null)
+            {
+                return BadRequest();
+            }
+            return Created($"/api/user/{createdUser.Id}", createdUser);
         }
 
         // PUT: api/User/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
+        //[HttpPut("{id}")]
+        //public void Put(int id, [FromBody] string value)
+        //{
+        //}
 
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            if (id > _users.Count)
-                return NotFound();
-            else
-            {
-                _users.RemoveAt(id-1);
-                return Ok();
-            }
-        }
+        //// DELETE: api/ApiWithActions/5
+        //[HttpDelete("{id}")]
+        //public IActionResult Delete(int id)
+        //{
+        //    if (id > _users.Count)
+        //        return NotFound();
+        //    else
+        //    {
+        //        _users.RemoveAt(id-1);
+        //        return Ok();
+        //    }
+        //}
     }
 }

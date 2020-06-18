@@ -4,6 +4,8 @@ namespace UserAPI.Models
 {
     public class UserModel
     {
+        public int Id { get; set; }
+
         [Required]
         public string FName { get; set; }
 
@@ -11,6 +13,6 @@ namespace UserAPI.Models
         public  string LName { get; set; }
 
         [Required, EmailAddress]
-        public string Value { get; set; }
+        public string Email { get; set; }
     }
 }

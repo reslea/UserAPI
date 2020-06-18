@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -11,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using UserAPI.DataAccess;
+using AutoMapper;
 
 namespace UserAPI
 {
@@ -27,6 +30,11 @@ namespace UserAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            services.AddScoped<UserRepository>();
+
+            services.AddAutoMapper(typeof(Startup));
+            services.AddMediatR(typeof(Startup));
 
             services.AddSwaggerGen(c =>
             {
